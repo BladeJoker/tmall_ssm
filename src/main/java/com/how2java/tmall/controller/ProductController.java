@@ -25,19 +25,22 @@ public class ProductController {
     ProductService productService;
 
     @RequestMapping("admin_product_list")
-    public String list(Page page, Model model, int cid){
-        Category category = categoryService.get(cid);
-        PageHelper.offsetPage(page.getStart(),page.getCount());
-        List<Product> list = productService.list(cid);
-        int total = (int)new PageInfo<>(list).getTotal();
-        page.setTotal(total);
-        page.setParam("&cid="+category.getId());
+    public String list(int cid, Model model, Page page) {
+        Category c = categoryService.get(cid);
 
-        model.addAttribute("page",page);
-        model.addAttribute("c",category);
-        model.addAttribute("ps",list);
+        PageHelper.offsetPage(page.getStart(),page.getCount());
+        List<Product> ps = productService.list(cid);
+
+        int total = (int) new PageInfo<>(ps).getTotal();
+        page.setTotal(total);
+        page.setParam("&cid="+c.getId());
+
+        model.addAttribute("ps", ps);
+        model.addAttribute("c", c);
+        model.addAttribute("page", page);
+
         return "admin/listProduct";
-    };
+    }
 
     @RequestMapping("admin_product_add")
     public String add(Product product){
