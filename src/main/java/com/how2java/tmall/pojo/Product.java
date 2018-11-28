@@ -19,6 +19,16 @@ public class Product {
 
     private Date createDate;
 
+    private Category category;
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }
+
     public Integer getId() {
         return id;
     }
@@ -81,5 +91,20 @@ public class Product {
 
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
+    }
+
+    @Override
+    public String toString() {
+        return "Product{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", subTitle='" + subTitle + '\'' +
+                ", originalPrice=" + originalPrice +
+                ", promotePrice=" + promotePrice +
+                ", stock=" + stock +
+                ", cid=" + cid +
+                ", createDate=" + createDate +
+                ", category=" + category +
+                '}';
     }
 }
