@@ -15,4 +15,8 @@ public interface UserService {
     User get(int id);
 
     List list();
+
+    boolean isExitst(String name);
+
+    User get(String name, String password);
 }

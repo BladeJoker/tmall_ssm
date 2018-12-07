@@ -1,12 +1,20 @@
 package com.how2java.tmall.controller;
 
-import com.how2java.tmall.pojo.Category;
+import com.github.pagehelper.PageHelper;
+import com.how2java.tmall.pojo.*;
 import com.how2java.tmall.service.*;
+import comparator.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.util.HtmlUtils;
 
+import javax.servlet.http.HttpSession;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 @Controller
@@ -26,6 +34,9 @@ public class ForeController {
     OrderService orderService;
     @Autowired
     OrderItemService orderItemService;
+    @Autowired
+    ReviewService reviewService;
+
 
     @RequestMapping("forehome")
     public String home(Model model) {
@@ -36,4 +47,119 @@ public class ForeController {
         return "fore/home";
     }
 
+    @RequestMapping("foreregister")
+    public String register(User user, Model model){
+        String name = user.getName();
+        name = HtmlUtils.htmlEscape(name);
+        user.setName(name);
+        boolean exitst = userService.isExitst(name);
+        if (exitst){
+            String m ="用户名已经被使用,不能使用";
+            model.addAttribute("msg",m);
+            model.addAttribute("user",null);
+            return "fore/register";
+        }
+        userService.add(user);
+        return "redirect:/registerSuccessPage";
+    }
+
+    @RequestMapping("forelogin")
+    public String login(String name, String password, HttpSession session, Model model) throws IOException{
+        name = HtmlUtils.htmlEscape(name);
+        User user = userService.get(name, password);
+        if (user==null){
+            model.addAttribute("msg", "账号密码错误");
+            return "fore/login";
+        }
+        session.setAttribute("user",user);
+        return "redirect:forehome";
+    }
+
+    @RequestMapping("forelogout")
+    public String logout( HttpSession session) {
+        session.removeAttribute("user");
+        return "redirect:forehome";
+    }
+
+    @RequestMapping("foreproduct")
+    public String product(int pid, Model model){
+        Product p = productService.get(pid);
+        List<ProductImage> productSingleImages = productImageService.list(p.getId(), ProductImageService.type_single);
+        List<ProductImage> productDetailImages = productImageService.list(p.getId(), ProductImageService.type_detail);
+        p.setProductDetailImages(productDetailImages);
+        p.setProductSingleImages(productSingleImages);
+
+        List list = reviewService.list(pid);
+        List<PropertyValue> pv = propertyValueService.list(pid);
+        productService.setSaleAndReviewNumber(p);
+        productService.setFirstProductImage(p);
+        model.addAttribute("reviews", list);
+        model.addAttribute("p", p);
+        model.addAttribute("pvs", pv);
+        return "fore/product";
+    }
+
+    @RequestMapping("forecheckLogin")
+    @ResponseBody
+    public String checkLogin( HttpSession session) {
+        User user =(User)  session.getAttribute("user");
+        if(null!=user)
+            return "success";
+        return "fail";
+    }
+
+    @RequestMapping("foreloginAjax")
+    @ResponseBody
+    public String loginAjax(@RequestParam("name") String name, @RequestParam("password") String password,HttpSession session) {
+        name = HtmlUtils.htmlEscape(name);
+        User user = userService.get(name,password);
+
+        if(null==user){
+            return "fail";
+        }
+        session.setAttribute("user", user);
+        return "success";
+    }
+
+    @RequestMapping("forecategory")
+    public String category(int cid, Model model, String sort){
+        Category c = categoryService.get(cid);
+        productService.fill(c);
+        productService.setSaleAndReviewNumber(c.getProducts());
+
+        if(null!=sort){
+            switch(sort){
+                case "review":
+                    Collections.sort(c.getProducts(),new ProductReviewComparator());
+                    break;
+                case "date" :
+                    Collections.sort(c.getProducts(),new ProductDateComparator());
+                    break;
+
+                case "saleCount" :
+                    Collections.sort(c.getProducts(),new ProductSaleCountComparator());
+                    break;
+
+                case "price":
+                    Collections.sort(c.getProducts(),new ProductPriceComparator());
+                    break;
+
+                case "all":
+                    Collections.sort(c.getProducts(),new ProductAllComparator());
+                    break;
+            }
+        }
+        model.addAttribute("c",c);
+        return "fore/category";
+    }
+
+    @RequestMapping("foresearch")
+    public String search( String keyword,Model model){
+
+        PageHelper.offsetPage(0,20);
+        List<Product> ps= productService.search(keyword);
+        productService.setSaleAndReviewNumber(ps);
+        model.addAttribute("ps",ps);
+        return "fore/searchResult";
+    }
 }
