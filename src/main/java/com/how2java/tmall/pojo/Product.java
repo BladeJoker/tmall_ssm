@@ -1,9 +1,10 @@
 package com.how2java.tmall.pojo;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
-public class Product {
+public class Product implements Serializable{
     private Integer id;
 
     private String name;

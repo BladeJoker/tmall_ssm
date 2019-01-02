@@ -1,6 +1,8 @@
 package com.how2java.tmall.pojo;
 
-public class OrderItem {
+import java.io.Serializable;
+
+public class OrderItem implements Serializable{
     private Integer id;
 
     private Integer pid;
